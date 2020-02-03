@@ -2,17 +2,23 @@
   "name": "level-viewer",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
   },
   "author": "",
-  "license": "ISC",
+  "repository": {
+    "url": "https://github.com/HyperbolaStudio/level-viewer",
+    "type": "git"
+  },
+  "keywords": ["leveldb"],
+  "license": "MIT",
   "dependencies": {
-    "@types/leveldown": "^4.0.2",
-    "level": "^6.0.0"
+    "leveldown": "^5.4.1"
   },
   "devDependencies": {
+    "@types/leveldown": "^4.0.2",
     "ts-node": "^8.6.2"
   }
 }

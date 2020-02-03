@@ -1,5 +1,5 @@
 import {ChildProcess} from 'child_process'
-import { AddonInfo, QueryTag, KeyValuePair, AddonExecFunc } from '../definitions';
+import { AddonManifest, QueryTag, KeyValuePair, AddonExecFunc } from '../definitions';
 import { LevelDown } from 'leveldown';
 import { fork } from "child_process";
 
@@ -16,7 +16,7 @@ export class Addon{
     }
 
     childProc:ChildProcess;
-    addonInfo!: AddonInfo.AddonInfoType;
+    addonInfo!: AddonManifest.AddonManifestType;
 
     private _send(message:AddonMessage):Promise<AddonMessage>{
         return new Promise((resolve,reject)=>{
@@ -36,7 +36,7 @@ export class Addon{
     }
 
     async initAddonInfo(){
-        let msg = await this._send(new AddonMessage(QueryTag.INIT));
+        let msg = await this._send(new AddonMessage(QueryTag.INIT,undefined));
         if(QueryTag.assertMsgType(QueryTag.INIT_RETURN,msg)){
             this.addonInfo = msg.content;
         }else{
@@ -44,14 +44,7 @@ export class Addon{
         }
     }
 
-    async execFunc(db:LevelDown,call:AddonExecFunc.AddonExecFuncCall){
-        if(this.addonInfo.funcs[call.name].requireDatabase){
-            if(call.args){
-                call.args.unshift(db);
-            }else{
-                call.args = [db];
-            }
-        }
+    async execFunc(call:AddonExecFunc.AddonExecFuncCall):Promise<AddonExecFunc.AddonExecFuncReturn>{
         let msg = new AddonMessage(QueryTag.EXEC_FUNC,call);
         let ret = await this._send(msg);
         if(QueryTag.assertMsgType(QueryTag.EXEC_FUNC_RETURN,ret)){
@@ -59,19 +52,21 @@ export class Addon{
                 throw ret.content.err;
             }
             return ret.content;
+        }else{
+            throw new TypeError();
         }
     }
 
 }
 
-export class AddonMessage{
-    constructor(queryTag:Number,message?:any){
+export class AddonMessage<K extends keyof QueryTag.QueryTagMessageContentMap = any>{
+    constructor(queryTag:K,content:QueryTag.QueryTagMessageContentMap[K]){
         this.queryTag = queryTag;
-        this.content = message;
+        this.content = content;
     }
 
     queryTag:Number;
-    content:any;
+    content:QueryTag.QueryTagMessageContentMap[K];
 
     static isAddonMessage(obj:any):obj is AddonMessage{
         return obj && typeof(obj.queryTag) == 'number';
